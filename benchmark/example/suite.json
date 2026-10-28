@@ -1,0 +1,67 @@
+{
+  "model": "claude-sonnet-5-5",
+  "judge_model": "claude-opus-5-5",
+  "runs": 5,
+  "timeout_s": 2400,
+  "max_budget_usd": 10,
+  "results_dir": "results",
+  "keep_workdirs": false,
+  "claude_args": ["--permission-mode", "bypassPermissions"],
+
+  "project": {
+    "repo": "../../../my-project",
+    "setup_cmd": "composer install -q --no-interaction",
+    "test_cmd": "vendor/bin/phpunit"
+  },
+
+  "variants": {
+    "sdd": {
+      "path": ["bin"],
+      "checks": {"tag_check": "tag-check"}
+    },
+    "plain": {
+      "remove": ["docs", "CLAUDE.md", "AGENTS.md", "bin/tag-ls", "bin/tag-lookup", "bin/tag-check", ".claude"],
+      "strip_tags": true,
+      "strip_line_regex": [],
+      "claude_md": "baseline-CLAUDE.md"
+    }
+  },
+
+  "tasks": [
+    {
+      "id": "feature-filter-type",
+      "kind": "feature",
+      "base_ref": "<parent of the implementation commit>",
+      "reference_ref": "<implementation commit, ex. 'PL-006: filter by type'>",
+      "prompt": "Add a filter by type to the pokemon list: a `type` query parameter on GET /pokemons keeps only the pokemons of exactly that type. Write the tests.",
+      "hidden_tests": ["tests/functional/PokemonListFilterTypeTest.php"],
+      "accept_cmd": "vendor/bin/phpunit tests/functional/PokemonListFilterTypeTest.php"
+    },
+    {
+      "id": "update-page-size",
+      "kind": "update",
+      "base_ref": "<...>",
+      "reference_ref": "<...>",
+      "prompt": "The pokemon list must now show 10 pokemons per page instead of 5. Update the code and the tests.",
+      "hidden_tests": ["tests/functional/PokemonListControllerTest.php"],
+      "accept_cmd": "vendor/bin/phpunit tests/functional/PokemonListControllerTest.php"
+    },
+    {
+      "id": "bug-order-by-level",
+      "kind": "bug",
+      "base_ref": "<parent of the fix commit>",
+      "reference_ref": "<fix commit>",
+      "prompt": "Bug report: when I order the list by level then by name, pokemons of the same level are not sorted by name. Fix it.",
+      "hidden_tests": ["tests/unit/PokemonOrderTest.php"],
+      "accept_cmd": "vendor/bin/phpunit tests/unit/PokemonOrderTest.php"
+    },
+    {
+      "id": "question-ordering",
+      "kind": "question",
+      "base_ref": "<any commit>",
+      "prompt": "Without modifying anything: which files and methods implement the ordering of the pokemon list, and which tests cover it? Give paths.",
+      "run_suite": false,
+      "answer_regex": ["src/Service/PokemonOrder\\.php", "tests/unit/PokemonOrderTest\\.php", "PokemonListControllerTest"]
+    }
+  ]
+}

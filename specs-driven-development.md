@@ -112,6 +112,54 @@ The scripts match tags with word boundaries and only for prefixes declared in th
 
 Tests are recognised by their path: a `tests/`, `test/`, `__tests__/` or `spec/` directory, or a file named `*.test.*`, `*.spec.*` or `*Test.*`. Their layer is deduced from a `unit/`, `functional/`, `integration/` or `e2e/` directory in the path (plain `test` if there is none), so organise the tests by layer.
 
+### Attachments
+
+Some things are clearer as a picture than as a list of rules: a workflow, the states of an order, the navigation between pages, a mock-up.
+They are stored in `docs/business/attachments/`, named after the feature that owns them: `docs/business/attachments/PL-ordering-workflow.md`.
+Finding the attachments of a feature is then `ls docs/business/attachments/PL-*`.
+
+~~~markdown
+# Pokemon list: ordering workflow
+
+Used by `docs/business/PL-pokemon-list.md`.
+
+```mermaid
+stateDiagram-v2
+    [*] --> ById: @PL-008
+    ById --> ByCriteria: criteria selected @PL-009
+    ByCriteria --> ById: criteria cleared @PL-008
+```
+~~~
+
+- **An attachment illustrates the rules, it doesn't replace them.** Rules stay the testable assertions: every step or transition that matters is a rule, and the attachment references it with `@PL-008`. A behaviour that is only in a diagram has no tag, no test and no status, so it is invisible to the tools.
+- **Referenced by its path**, in backticks and relative to the project root, from the feature file (its introduction) or from a rule, ex.: ``- PL-010 [to-do]: The checkout follows `docs/business/attachments/PL-checkout.md`.`` An attachment can be used by several features: it is named after one of them and referenced by path from the others.
+- **Text first.** Prefer a diagram as code (Mermaid in a `.md` file): it is diffable, reviewable, cheap for an agent to read, and it can carry `@` references. A binary file (image, PDF) is allowed for what can't be written as text (a mock-up, an external document), with a sentence next to its reference saying what it shows.
+- **No front matter, no tags, no marker.** The status is carried by the rules it references. Changing an attachment in a way that changes behaviour means changing the rules too, validated by the product owner as any rule change.
+- Attachments belong to the docs: code and tests never reference them (they reference the rules).
+
+The link is written in one direction only (feature → attachment by path, attachment → rules by tag): `tag-lookup` gives the reverse (the attachments mentioning a rule appear as `docs:ref` lines).
+
+### Glossary
+
+The business vocabulary is defined once, in `docs/business/glossary.md`: the words of the domain that rules, code and tests must use with the same meaning (a "favorite", a "level", an "official pokemon").
+
+~~~markdown
+# Glossary
+
+- Official pokemon: a pokemon that exists in the PokeAPI, matched by its exact name (case-insensitive). Opposite: custom pokemon.
+- Custom pokemon: a pokemon created by a user from the new pokemon page @NP.
+- Level, Lv: an integer from 1 to 100.
+- Trainer, Pokemon trainer: a person who owns pokemons. Not: player, user.
+- Poke Ball, Pokeball: the item used to catch a pokemon. Not: Great Ball, Ultra Ball (other items).
+~~~
+
+- **One term per line**, `- Term, Synonym, ...: definition.`, so `grep -iw lv docs/business/glossary.md` returns a whole definition, whatever the word searched, like a lookup of a rule.
+- **The first term is the preferred one**: rules, code (class and method names) and tests use it. The synonyms that follow mean exactly the same thing (an abbreviation, a spelling, the word the stakeholders use): they let an agent map a request or a bug report to the right term, and a synonym found in a rule is replaced by the preferred term.
+- Words that look close but mean something else, or must not be used, are listed after `Not:`. A word is either a synonym or something else: two things that only look alike (a pokedex and a pokenav) are two terms, each with its own line.
+- **A definition is not a rule.** It says what a word means, not how the app behaves: "Level: an integer from 1 to 100" is a definition, "The level must be between 1 and 100" is a rule (with a tag and tests). When a definition implies a behaviour to test, write the rule and reference it from the definition (`@NP-007`).
+- No front matter, no tags, no markers. A definition can reference rules and features (`@NP`), which makes it appear in their `docs:ref` lines. Rules don't need to reference the glossary: they just use its words.
+- Changing a definition is a business change: check the rules that use the word (`grep -rwi level docs/business`) and have the change validated by the product owner.
+
 ### Finding a rule
 
 #### From a description
@@ -128,6 +176,7 @@ The agent uses `tag-lookup` to get everything related to a tag.
 Scripts are small and have compact outputs (forward slashes, one line per result, no explanatory text) to keep the token cost low.
 
 Common behaviour:
+- Feature files are the `*.md` files directly under `docs/business`, except `glossary.md`: subdirectories (like `attachments/`) are not feature files.
 - They look for `docs/business` from the current directory upwards: the closest parent containing it is the project root, and the printed paths are relative to it. `TAG_DOCS_DIR` overrides the location of the feature files.
 - They only need bash, awk and grep. `tag-lookup` uses `git grep` inside a git repository (so `.gitignore` is respected and new untracked files are found). Otherwise it uses `grep -r`, which skips `.git`, `node_modules`, `vendor`, `var`, `dist`, `build`, `coverage`, `.next`, `target` and `docs`.
 - A script must be saved with LF line endings, a CRLF script breaks bash (ex.: `tag-ls text eol=lf` in `.gitattributes`).
@@ -147,7 +196,10 @@ PL-003  By default the list is ordered by id.
 ...
 PL-006  [to-do] The list can be filtered by type.
 PL-007  [draft] A pokemon can be added to favorites from the list.
+attachment  docs/business/attachments/PL-ordering-workflow.md
 ```
+
+The `attachment` lines are the attachments referenced by the feature file, so an agent knows they exist without listing the directory.
 
 `tag-ls --todo [prefix]` lists the `[to-do]` rules of all the features (or of one): this is where an agent picks the next rules to implement. `tag-ls --draft [prefix]` lists the `[draft]` rules, the ones still waiting for the product owner's validation.
 
@@ -172,7 +224,7 @@ test:unit        tests/unit/order.test.js:2 "orders by id by default"
 - The header gives the tag and its feature prefix once. The tag isn't repeated on each line.
 - The match is exact, with word boundaries (`PL-003` doesn't match `PL-0031`).
 - The `docs` line is the rule itself, with its marker if it has one. A tag that is used but not defined shows `docs  (not defined in docs/business)`.
-- `docs:ref` lines are the other lines of `docs/business` and `docs/technical` that mention the tag, with their text. Other rules mentioning the tag are the declared dependencies of the rule. Other files under `docs/` (like this one) are not scanned.
+- `docs:ref` lines are the other lines of `docs/business` (attachments included) and `docs/technical` that mention the tag, with their text. Other rules mentioning the tag are the declared dependencies of the rule. Other files under `docs/` (like this one) are not scanned.
 - Components tagged only at the feature level (`@PL`) are not listed by default. `--feature` adds them as `feature` lines.
 - For code, the output gives the enclosing symbol (`Class::method`, a function, a class, or the `"title"` of a JS test) so the agent doesn't need to open the file to know what it is. Line numbers move, the symbol name is more stable.
 - The symbol is found with simple heuristics (PHP, JS/TS, Python, Java, C#): a docblock or an annotation right above a declaration belongs to that declaration, a comment inside a body belongs to the enclosing function. It is best-effort: when no symbol is found, only `path:line` is shown. `universal-ctags` or tree-sitter could replace the heuristics later.
@@ -206,12 +258,16 @@ Errors:
 - a rule without marker that has no reference in the code or no tagged test (`[draft]` and `[to-do]` rules are ignored). These are the blind spots where a regression would pass silently;
 - a tag used in the code or tests that doesn't exist in the docs, and a reference to an undefined rule in `docs/business/` or `docs/technical/`;
 - an `@XX-001` reference whose prefix isn't declared (only the `@` form can be checked, since a prefix can't be recognised otherwise);
-- a path written in backticks in `docs/technical/` that doesn't exist anymore;
+- a path written in backticks in `docs/business/` or `docs/technical/` that doesn't exist anymore (ex.: a renamed attachment);
+- a reference to `docs/business/attachments/` from the code or the tests;
 - a dependency file without `features:` in its front matter, or listing an unknown prefix.
 
 Warnings:
 - a `[to-do]` rule that already has code and tagged tests: the marker is probably stale, and the next agent would implement the rule again;
-- a file of `docs/business/` without front matter (it is ignored).
+- a file of `docs/business/` without front matter, other than `glossary.md` (it is ignored);
+- an attachment that no feature file references: it is either dead or a forgotten link;
+- an attachment whose name doesn't start with a declared prefix;
+- a line of `glossary.md` that doesn't follow `- Term, Synonym, ...: definition.`, or a term or synonym that appears on two lines.
 
 Paths are recognised only in backticks and outside fenced code blocks: a relative path with at least one `/`, no space and no `://`, optionally followed by `::symbol`, `#symbol` or `:line`. It is checked only when its first directory exists or its last part has an extension, so API routes (`v1/pokemon`) and placeholders (`<name>.md`) are ignored.
 

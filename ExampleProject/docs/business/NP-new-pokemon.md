@@ -6,7 +6,7 @@ next_tag: 7
 
 # New pokemon
 
-A page allows to add a new pokemon.
+A page allows to add a new pokemon. Navigation and form workflow: `docs/business/attachments/NP-form-workflow.md`.
 
 - NP-001 [to-do]: The form has the fields name, type, level and description.
 - NP-002 [to-do]: Name and type are required.

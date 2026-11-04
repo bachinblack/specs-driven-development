@@ -148,11 +148,14 @@ The business vocabulary is defined once, in `docs/business/glossary.md`: the wor
 
 - Official pokemon: a pokemon that exists in the PokeAPI, matched by its exact name (case-insensitive). Opposite: custom pokemon.
 - Custom pokemon: a pokemon created by a user from the new pokemon page @NP.
-- Level: an integer from 1 to 100.
+- Level, Lv: an integer from 1 to 100.
+- Trainer, Pokemon trainer: a person who owns pokemons. Not: player, user.
+- Poke Ball, Pokeball: the item used to catch a pokemon. Not: Great Ball, Ultra Ball (other items).
 ~~~
 
-- **One term per line**, `- Term: definition.`, so `grep -i '^- level:' docs/business/glossary.md` returns a whole definition, like a lookup of a rule.
-- Rejected synonyms are listed on the term's line ("Not: monster"), so that one word is used everywhere and an agent meeting the synonym in a request finds the right term. Rules, code (class and method names) and tests use the term of the glossary.
+- **One term per line**, `- Term, Synonym, ...: definition.`, so `grep -iw lv docs/business/glossary.md` returns a whole definition, whatever the word searched, like a lookup of a rule.
+- **The first term is the preferred one**: rules, code (class and method names) and tests use it. The synonyms that follow mean exactly the same thing (an abbreviation, a spelling, the word the stakeholders use): they let an agent map a request or a bug report to the right term, and a synonym found in a rule is replaced by the preferred term.
+- Words that look close but mean something else, or must not be used, are listed after `Not:`. A word is either a synonym or something else: two things that only look alike (a pokedex and a pokenav) are two terms, each with its own line.
 - **A definition is not a rule.** It says what a word means, not how the app behaves: "Level: an integer from 1 to 100" is a definition, "The level must be between 1 and 100" is a rule (with a tag and tests). When a definition implies a behaviour to test, write the rule and reference it from the definition (`@NP-007`).
 - No front matter, no tags, no markers. A definition can reference rules and features (`@NP`), which makes it appear in their `docs:ref` lines. Rules don't need to reference the glossary: they just use its words.
 - Changing a definition is a business change: check the rules that use the word (`grep -rwi level docs/business`) and have the change validated by the product owner.
@@ -264,7 +267,7 @@ Warnings:
 - a file of `docs/business/` without front matter, other than `glossary.md` (it is ignored);
 - an attachment that no feature file references: it is either dead or a forgotten link;
 - an attachment whose name doesn't start with a declared prefix;
-- a line of `glossary.md` that doesn't follow `- Term: definition.`, or a term defined twice.
+- a line of `glossary.md` that doesn't follow `- Term, Synonym, ...: definition.`, or a term or synonym that appears on two lines.
 
 Paths are recognised only in backticks and outside fenced code blocks: a relative path with at least one `/`, no space and no `://`, optionally followed by `::symbol`, `#symbol` or `:line`. It is checked only when its first directory exists or its last part has an extension, so API routes (`v1/pokemon`) and placeholders (`<name>.md`) are ignored.
 

@@ -4,6 +4,7 @@
 
 - `docs/business/`: one file per feature, named after its prefix (`PL-pokemon-list.md`). One rule per line: `- PL-001 [marker]: text`.
 - `docs/business/attachments/`: diagrams and workflows (Mermaid), named after their feature (`NP-form-workflow.md`), referenced by path from the feature file. They reference the rules (`@NP-004`) and never replace them.
+- `docs/business/glossary.md`: the domain vocabulary, one term per line (`- Term: definition.`). Rules, code and tests use these terms.
 - `docs/technical/`: `stack.md` (stack, test layers, commands), `database/` (DDL and diagram, generated), `dependencies/` (external services).
 - Conventions: `../specs-driven-development.md`. Workflow: `../project-flow.md`.
 

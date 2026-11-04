@@ -139,6 +139,24 @@ stateDiagram-v2
 
 The link is written in one direction only (feature → attachment by path, attachment → rules by tag): `tag-lookup` gives the reverse (the attachments mentioning a rule appear as `docs:ref` lines).
 
+### Glossary
+
+The business vocabulary is defined once, in `docs/business/glossary.md`: the words of the domain that rules, code and tests must use with the same meaning (a "favorite", a "level", an "official pokemon").
+
+~~~markdown
+# Glossary
+
+- Official pokemon: a pokemon that exists in the PokeAPI, matched by its exact name (case-insensitive). Opposite: custom pokemon.
+- Custom pokemon: a pokemon created by a user from the new pokemon page @NP.
+- Level: an integer from 1 to 100.
+~~~
+
+- **One term per line**, `- Term: definition.`, so `grep -i '^- level:' docs/business/glossary.md` returns a whole definition, like a lookup of a rule.
+- Rejected synonyms are listed on the term's line ("Not: monster"), so that one word is used everywhere and an agent meeting the synonym in a request finds the right term. Rules, code (class and method names) and tests use the term of the glossary.
+- **A definition is not a rule.** It says what a word means, not how the app behaves: "Level: an integer from 1 to 100" is a definition, "The level must be between 1 and 100" is a rule (with a tag and tests). When a definition implies a behaviour to test, write the rule and reference it from the definition (`@NP-007`).
+- No front matter, no tags, no markers. A definition can reference rules and features (`@NP`), which makes it appear in their `docs:ref` lines. Rules don't need to reference the glossary: they just use its words.
+- Changing a definition is a business change: check the rules that use the word (`grep -rwi level docs/business`) and have the change validated by the product owner.
+
 ### Finding a rule
 
 #### From a description
@@ -155,7 +173,7 @@ The agent uses `tag-lookup` to get everything related to a tag.
 Scripts are small and have compact outputs (forward slashes, one line per result, no explanatory text) to keep the token cost low.
 
 Common behaviour:
-- Feature files are the `*.md` files directly under `docs/business`: subdirectories (like `attachments/`) are not feature files.
+- Feature files are the `*.md` files directly under `docs/business`, except `glossary.md`: subdirectories (like `attachments/`) are not feature files.
 - They look for `docs/business` from the current directory upwards: the closest parent containing it is the project root, and the printed paths are relative to it. `TAG_DOCS_DIR` overrides the location of the feature files.
 - They only need bash, awk and grep. `tag-lookup` uses `git grep` inside a git repository (so `.gitignore` is respected and new untracked files are found). Otherwise it uses `grep -r`, which skips `.git`, `node_modules`, `vendor`, `var`, `dist`, `build`, `coverage`, `.next`, `target` and `docs`.
 - A script must be saved with LF line endings, a CRLF script breaks bash (ex.: `tag-ls text eol=lf` in `.gitattributes`).
@@ -243,9 +261,10 @@ Errors:
 
 Warnings:
 - a `[to-do]` rule that already has code and tagged tests: the marker is probably stale, and the next agent would implement the rule again;
-- a file of `docs/business/` without front matter (it is ignored);
+- a file of `docs/business/` without front matter, other than `glossary.md` (it is ignored);
 - an attachment that no feature file references: it is either dead or a forgotten link;
-- an attachment whose name doesn't start with a declared prefix.
+- an attachment whose name doesn't start with a declared prefix;
+- a line of `glossary.md` that doesn't follow `- Term: definition.`, or a term defined twice.
 
 Paths are recognised only in backticks and outside fenced code blocks: a relative path with at least one `/`, no space and no `://`, optionally followed by `::symbol`, `#symbol` or `:line`. It is checked only when its first directory exists or its last part has an extension, so API routes (`v1/pokemon`) and placeholders (`<name>.md`) are ignored.
 

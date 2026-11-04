@@ -1,6 +1,7 @@
 # Specs-driven project
 
 Business rules: `docs/business/` (one file per feature, `<PREFIX>-<name>.md`, one rule per line, tags like XX-NNN).
+Attachments (diagrams, workflows): `docs/business/attachments/<PREFIX>-<name>.md`, referenced by path from the feature, referencing rules with `@XX-NNN`. They illustrate rules, never replace them; code and tests don't reference them.
 Technical docs: `docs/technical/` (stack, dependencies, database).
 Details: `docs/specs-driven-development.md` (conventions), `docs/project-flow.md` (process).
 

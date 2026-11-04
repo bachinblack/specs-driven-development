@@ -12,12 +12,13 @@ A project starts with a list of features stored in `docs/business/`, one file pe
 Each feature first has a prefix and a description of what it does (front matter of its file).
 Then a list of business rules is established for each feature, with one tag per rule. Rules are simple and testable (one rule = one assertion).
 New rules start as `[draft]`.
+Workflows, state diagrams or mock-ups that make a feature easier to understand go in `docs/business/attachments/` (Mermaid preferred), are referenced by path from the feature file, and reference the rules they illustrate with `@PL-001` (see `specs-driven-development.md`).
 
 ## 2. Challenging the docs
 
 Once the first version of the docs is complete, agents, devs and stakeholders read it and point out missing or contradictory rules.
 
-- An agent goes first: it compares the rules inside a feature and between features (starting from `tag-ls`) and reports contradictions, gaps and ambiguities.
+- An agent goes first: it compares the rules inside a feature and between features (starting from `tag-ls`) and reports contradictions, gaps and ambiguities. It also compares each attachment with the rules: a step or transition of a diagram without a matching rule is a gap.
 - Humans (devs, stakeholders) then review the docs and the agent's report.
 - The result is a list of contradictions and open questions, which are resolved by modifying the rules.
 - A rule goes from `[draft]` to `[to-do]` when the product owner validates it. Agents only implement `[to-do]` rules (the markers are described in `specs-driven-development.md`). `tag-ls --draft` lists the rules still waiting for validation.
@@ -61,7 +62,7 @@ A tag is an entry point, not a perimeter: the agent starts from the tag, then fo
 
 1. **Find the rule.** `tag-lookup <tag>` returns the rule, its code, its tests and the other rules that mention it. If the agent only has a description, it uses `tag-ls`, then the feature file (its name starts with the prefix). A `(none)` for code or tests in the output is a gap to look at.
 2. **Analyse the impact before changing anything.** List the callers and callees of the symbols involved (search, LSP) and the tags they carry. A shared utility is a risk zone. Add the rules that reference this one (the `docs:ref` lines of `tag-lookup`). This gives the list of potentially impacted rules.
-3. **Change the rule.** Modify it (the tag stays), add one (a new tag from `next_tag`), delete it (the tag is retired, never reused), or split it (new tags, the old one retired). Check the neighbouring rules for contradictions. The product owner validates the change before any code is written (the rule diff comes first): until then the rule is `[draft]`, then it becomes `[to-do]`.
+3. **Change the rule.** Modify it (the tag stays), add one (a new tag from `next_tag`), delete it (the tag is retired, never reused), or split it (new tags, the old one retired). Check the neighbouring rules for contradictions, and update the attachments that mention the rule (`docs:ref` lines). The product owner validates the change before any code is written (the rule diff comes first): until then the rule is `[draft]`, then it becomes `[to-do]`.
 4. **Tests first.** Update or add the tagged tests of the rule and see them fail, then change the code and remove the `[to-do]` marker.
 5. **Verify.** Run the tests of the impacted rules, then the full suite, then `tag-check`.
 6. **Commit.** Docs, code and tests go in one commit (or one PR) referencing the rule or feature that changed. Its description mentions the rules that were checked as impacted.
